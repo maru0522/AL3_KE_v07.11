@@ -7,8 +7,10 @@ void RailCamera::Initialize(Vector3 pos, Vector3 rad)
     // ワールドトランスフォームの初期設定
     worldTransform_.translation_ = pos;
     worldTransform_.rotation_ = rad;
-   
+
     worldTransform_.Initialize();
+
+    viewProjection_.target = { 0, 0, 0 };
 
     // ビュープロジェクションの初期化
     viewProjection_.Initialize();
@@ -52,6 +54,6 @@ void RailCamera::Update()
     viewProjection_.UpdateMatrix();
 #pragma endregion
 
-    debugText_->SetPos(30, 30);
-    debugText_->Printf("eye.x:%f,eye.y:%f,eye.z:%f", viewProjection_.eye.x, viewProjection_.eye.y, viewProjection_.eye.z);
+    //debugText_->SetPos(30, 30);
+    //debugText_->Printf("eye.x:%f,eye.y:%f,eye.z:%f", viewProjection_.eye.x, viewProjection_.eye.y, viewProjection_.eye.z);
 }

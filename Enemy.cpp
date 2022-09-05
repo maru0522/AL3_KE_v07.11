@@ -3,23 +3,30 @@
 #include "Calc.h"
 #include "Vector3.h"
 
-void Enemy::Initialize(Model* model, uint32_t textureHandle, Vector3& pos)
+void Enemy::Initialize(Model* model, Vector3& pos, uint32_t point)
 {
     // NULLポインタチェック
     assert(model);
 
     // 引数として受け取ったデータをメンバ変数に記録する
     model_ = model;
-    textureHandle_ = textureHandle;
+    //textureHandle_ = textureHandle;
 
     // シングルトンインスタンスの取得
     debugText_ = DebugText::GetInstance();
+    audio_ = Audio::GetInstance();
+
+    // 音
+    eDeadSound_ = audio_->LoadWave("Task1_2Resources/sounds/dead.wav");
 
     worldTransform_.translation_ = pos;
+    worldTransform_.rotation_ = { 0,3.14159,0 };
 
     PhaseInitApproach();
 
     worldTransform_.Initialize();
+
+    point_ = point;
 }
 
 void Enemy::Fire()
@@ -46,6 +53,25 @@ void Enemy::Fire()
 
     // 弾を登録する
     bullets_.push_back(std::move(newBullet));
+}
+
+void Enemy::FireForward()
+{
+    assert(player_);
+
+    Vector3 velocity(0, 0, -0.5f);
+
+    // 弾を発射し、初期化
+    std::unique_ptr<EnemyBullet> newBullet = std::make_unique<EnemyBullet>();
+    newBullet->Initialize(model_, worldTransform_.translation_, velocity);
+
+    // 弾を登録する
+    bullets_.push_back(std::move(newBullet));
+}
+
+void Enemy::SetWorldPosition(Vector3& pos)
+{
+    worldTransform_.translation_ = pos;
 }
 
 void Enemy::PhaseInitApproach()
@@ -97,13 +123,13 @@ void Enemy::Update()
                        });
 
     // デバッグテキスト
-    debugText_->SetPos(50, 70);
-    debugText_->Printf("Enemy:(%f,%f,%f)",
-                       worldTransform_.translation_.x,
-                       worldTransform_.translation_.y,
-                       worldTransform_.translation_.z);
+    //debugText_->SetPos(50, 70);
+    //debugText_->Printf("Enemy:(%f,%f,%f)",
+    //                   worldTransform_.translation_.x,
+    //                   worldTransform_.translation_.y,
+    //                   worldTransform_.translation_.z);
 
-    switch (phase_) {
+    /*switch (phase_) {
         case Phase::Approach:
         default:
             PhaseApproach();
@@ -111,7 +137,20 @@ void Enemy::Update()
         case Phase::Leave:
             PhaseLeave();
             break;
+    }*/
+
+    std::random_device rng;
+
+    uint32_t index = rng();
+    if (index % 800 == 0) {
+        if (timer_ <= 0) {
+
+            FireForward();
+            timer_ = 200;
+        }
     }
+    timer_--;
+    
 
     // 弾更新
     for (std::unique_ptr<EnemyBullet>& bullet : bullets_) {
@@ -125,7 +164,7 @@ void Enemy::Update()
 
 void Enemy::Draw(ViewProjection viewProjection)
 {
-    model_->Draw(worldTransform_, viewProjection, textureHandle_);
+    model_->Draw(worldTransform_, viewProjection);
     for (std::unique_ptr<EnemyBullet>& bullet : bullets_) {
         bullet->Draw(viewProjection);
     }
@@ -134,6 +173,7 @@ void Enemy::Draw(ViewProjection viewProjection)
 void Enemy::OnCollision()
 {
     isDead_ = true;
+    audio_->PlayWave(eDeadSound_, false, 0.02);
 }
 
 Vector3 Enemy::GetWorldPosition()
@@ -146,4 +186,9 @@ Vector3 Enemy::GetWorldPosition()
     worldPos.z = worldTransform_.matWorld_.m[3][2];
 
     return worldPos;
+}
+
+Vector3 Enemy::GetPosition()
+{
+    return Vector3(worldTransform_.translation_);
 }

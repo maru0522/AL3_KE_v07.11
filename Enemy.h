@@ -5,6 +5,8 @@
 #include "input.h"
 #include "DebugText.h"
 #include "EnemyBullet.h"
+#include <random>
+#include "audio.h"
 
 // 自機クラスの前方宣言
 class Player;
@@ -28,7 +30,7 @@ private:
 	// モデル
 	Model* model_ = nullptr;
 	// テクスチャハンドル
-	uint32_t textureHandle_ = 0;
+	//uint32_t textureHandle_ = 0;
 
 	DebugText* debugText_ = nullptr;
 
@@ -44,9 +46,20 @@ private:
 	// デスフラグ
 	bool isDead_ = false;
 
+	int timer_ = 20;
+
+	uint32_t point_;
+
+	Audio* audio_ = nullptr;
+
+	uint32_t eDeadSound_ = 0;
 public:
-	void Initialize(Model* model, uint32_t textureHandle, Vector3& pos);
+	void Initialize(Model* model, Vector3& pos, uint32_t point);
 	void Fire();
+	void FireForward();
+
+	void SetWorldPosition(Vector3& pos);
+
 	void PhaseInitApproach();
 	void PhaseApproach();
 	void PhaseLeave();
@@ -54,10 +67,14 @@ public:
 	void Draw(ViewProjection viewProjection);
 	void SetPlayer(Player* player) { player_ = player; }
 
+	int32_t fireCoolTime = 120;
+
 	bool isDead() const { return isDead_; }
 
 	// 衝突を検出したら呼びだされるコールバック関数
 	void OnCollision();
+
+	void SetIsDead() { isDead_ = true; }
 
 	// 弾リストを取得
 	const std::list<std::unique_ptr<EnemyBullet>>& GetBullets() { return bullets_; }
@@ -65,5 +82,9 @@ public:
 	// ワールド座標を取得
 	Vector3 GetWorldPosition();
 
+	Vector3 GetPosition();
+
 	void SetParent(WorldTransform* worldTransform) { worldTransform_.parent_ = worldTransform; }
+
+	uint32_t GetPoint() { return point_; }
 };
